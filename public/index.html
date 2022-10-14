@@ -1,0 +1,488 @@
+<html lang="">
+<head>
+    <title>Rel-Time | Crypto</title>
+    <link rel="icon" href="https://www.coinbase.com/img/favicon/favicon-32.png" type="image/ico">
+
+    <!-- CSS only -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="style.css" type="text/css">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <script>
+        const port = 8080
+        const socket = new WebSocket(`ws://localhost:${port}`)
+        const source = new EventSource('/server-sent-events')
+
+        source.addEventListener('message', function(e) {
+            let data = JSON.parse(e.data)
+            console.info('The list of available currency pairs are:\n', data)
+        }, false)
+
+        socket.onmessage = e => {
+            let currencies  = JSON.parse(e.data)
+
+            console.log(currencies)
+
+            let priceSelector = $('.' + currencies.product_id + ' price')
+            let oldPrice = (priceSelector.html() === '...') ? currencies.price : priceSelector.html()
+
+            // Percentage change calculation (previous price in comparing with new price)
+            let changeByPercent = parseFloat((currencies.price - oldPrice) * 100 / oldPrice).toFixed(2)
+
+            // Parsing real time updates to table 😛
+            if (changeByPercent === '0.00' || changeByPercent === '-0.00') {
+                $('.' + currencies.product_id + ' change').html('<b>0%</b>')
+            } else if(changeByPercent > 0) {
+                $('.' + currencies.product_id + ' change').html('<b class="green">' + changeByPercent + '% <i class="fa fa-arrow-up"></i></b>')
+            } else if (changeByPercent < 0) {
+                $('.' + currencies.product_id + ' change').html('<b class="red">' + changeByPercent + '% <i class="fa fa-arrow-down"></i></b>')
+            }
+
+            priceSelector.html(currencies.price)
+            $('.' + currencies.product_id + ' volume').html(parseFloat(currencies.volume_24h).toFixed(2))
+            $('.' + currencies.product_id + ' side').html(currencies.side === 'buy' ? '<b class="green">buy</b>' : '<b class="red">sell</b>')
+        }
+
+        // Add to favorite function
+        function addToFavorite(a) {
+            let pageTitle = document.title
+            let pageURL = document.location
+
+            try {
+                // Internet Explorer solution
+                eval("window.external.AddFa-vorite(pageURL, pageTitle)".replace(/-/g,''))
+            } catch (e) {
+                try {
+                    // Mozilla Firefox solution
+                    window.sidebar.addPanel(pageTitle, pageURL, "")
+                }
+                catch (e) {
+                    // Opera solution
+                    if (typeof(opera) == "object") {
+                        a.rel="sidebar"
+                        a.title=pageTitle
+                        a.url=pageURL
+
+                        return true
+                    } else {
+                        // The rest browsers (i.e Chrome, Safari)
+                        alert('Press ' + (navigator.userAgent.toLowerCase().indexOf('mac') !== -1 ? 'Cmd' : 'Ctrl') + '+D to bookmark this page.')
+                    }
+                }
+            }
+
+            return false
+        }
+
+        setTimeout(() => {addToFavorite()}, 5000)
+
+        $('#addToFavorite').click(function () {
+
+        })
+    </script>
+</head>
+
+<body>
+<div class="container mt-5">
+    <div class="h3 text-muted">My Favorite</div>
+
+    <div id="starred" class="bg-white px-2 pt-1 mt-2">
+        <div class="table-responsive">
+            <table class="table">
+                <tbody>
+                <tr class="BTC-USD">
+                    <td>
+                        <div class="d-flex mt-2 border-right">
+                            <div class="box p-2 rounded">
+                                <span class="fas fa-star text-primary px-1"></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <div class="text-muted">Name</div>
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <img src="https://dynamic-assets.coinbase.com/e785e0181f1a23a30d9476038d9be91e9f6c63959b538eabbc51a1abc8898940383291eede695c3b8dfaa1829a9b57f5a2d0a16b0523580346c6b8fab67af14b/asset_icons/b57ac673f06a4b0338a596817eb0a50ce16e2059f327dc117744449a47915cb2.png"
+                                         alt="" class="icons">
+                                </div>
+                                <b class="pl-2">Bitcoin</b>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <div class="text-muted">Price</div>
+                            <div><b>$<price>...</price></b></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <div class="text-muted">Vol (24h)</div>
+                            <div><b>$<volume>...</volume></b></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <div class="text-muted">Side</div>
+                            <div><side><b class="red">...</b></side></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center labels">
+                                <div class="text-muted">Change</div>
+                            </div>
+                            <div><change><b class="red">...</b></change></div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <br>
+    <div class="d-lg-flex align-items-lg-center py-4">
+        <div class="h3 text-muted">Top Cryptocurrency Prices</div>
+    </div>
+    <div id="top">
+        <div class="bg-white table-responsive">
+            <table class="table">
+                <tbody>
+                    <tr class="ETH-USD">
+                        <td>
+                            <div class="d-flex mt-2 border-right">
+                                <div class="box p-2 rounded">
+                                    <span class="text-primary px-2 font-weight-bold">01</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Name</div>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <img src="https://dynamic-assets.coinbase.com/dbb4b4983bde81309ddab83eb598358eb44375b930b94687ebe38bc22e52c3b2125258ffb8477a5ef22e33d6bd72e32a506c391caa13af64c00e46613c3e5806/asset_icons/4113b082d21cc5fab17fc8f2d19fb996165bcce635e6900f7fc2d57c4ef33ae9.png"
+                                             alt="" class="icons">
+                                    </div>
+                                    <b class="pl-2">Ethereum</b>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Price</div>
+                                <div><b>$<price>...</price></b></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Vol (24h)</div>
+                                <div><b>$<volume>...</volume></b></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Side</div>
+                                <div><side><b class="green">...</b></side></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center labels">
+                                    <div class="text-muted">Change</div>
+                                </div>
+                                <div>
+                                    <change><b class="red">...</b></change>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="BTC-USD">
+                        <td>
+                            <div class="d-flex mt-2 border-right">
+                                <div class="box p-2 rounded">
+                                    <span class="text-primary px-1 font-weight-bold">02</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Name</div>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <img src="https://dynamic-assets.coinbase.com/e785e0181f1a23a30d9476038d9be91e9f6c63959b538eabbc51a1abc8898940383291eede695c3b8dfaa1829a9b57f5a2d0a16b0523580346c6b8fab67af14b/asset_icons/b57ac673f06a4b0338a596817eb0a50ce16e2059f327dc117744449a47915cb2.png"
+                                             alt="" class="icons">
+                                    </div>
+                                    <b class="pl-2">Bitcoin</b>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Price</div>
+                                <div><b>$<price>...</price></b></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Vol (24h)</div>
+                                <div><b>$<volume>...</volume></b></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Side</div>
+                                <div><side><b class="green">...</b></side></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center labels">
+                                    <div class="text-muted">Change</div>
+                                </div>
+                                <div><change><b class="green">...</b></change></div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="DOGE-USD">
+                        <td>
+                            <div class="d-flex mt-2 border-right">
+                                <div class="box p-2 rounded">
+                                    <span class="text-primary px-1 font-weight-bold">03</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Name</div>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <img src="https://dynamic-assets.coinbase.com/3803f30367bb3972e192cd3fdd2230cd37e6d468eab12575a859229b20f12ff9c994d2c86ccd7bf9bc258e9bd5e46c5254283182f70caf4bd02cc4f8e3890d82/asset_icons/1597d628dd19b7885433a2ac2d7de6ad196c519aeab4bfe679706aacbf1df78a.png" alt="" class="icons">
+                                    </div>
+                                    <b class="pl-2">Doge</b>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Price</div>
+                                <div><b>$<price>...</price></b></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Vol (24h)</div>
+                                <div><b>$<volume>...</volume></b></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="text-muted">Side</div>
+                                <div><side><b class="red">...</b></side></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center labels">
+                                    <div class="text-muted">Change</div>
+                                </div>
+                                <div><change><b class="green">...</b></change></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <br>
+    <a href="javascript:void(0)" onClick="return addToFavorite(this);" id="addToFavorite">Add to favorites</a>
+</div>
+</body>
+
+<style>
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    /* Track */
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    *{
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.05rem;
+    }
+    b {
+        font-weight: 500;
+    }
+    .pl-2 {
+        font-weight: 600 !important;
+    }
+    body{
+        background-color: #f3f3f3;
+    }
+    #starred{
+        box-shadow: 3px 3px 10px #b5b5b5;
+    }
+    .table div.text-muted{
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        margin-top: 0.3rem;
+    }
+    .icons{
+        object-fit: contain;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+    }
+    .graph img{
+        object-fit: contain;
+        width: 40px;
+        height: 50px;
+        transform: scale(2) rotateY(45deg);
+    }
+    #rotate-hide {
+        transform: scale(2) rotateY(45deg) rotateX(90deg) !important;
+    }
+    .graph .dot{
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        position: absolute;
+        background-color: blue;
+        box-shadow: 1px 1px 1px #a5a5a5;
+        top: 25px;
+    }
+    .graph .dot:after{
+        background-color: #fff;
+        content: '$9,999.00';
+        font-weight: 600;
+        font-size: 0.7rem;
+        position: absolute;
+        top: -25px;
+        left: -20px;
+        box-shadow: 1px 1px 2px #a5a5a5;
+        border-radius: 2px;
+    }
+    .font-weight-bold{
+        font-size: 1.3rem;
+    }
+    #ethereum{
+        transform: scale(2) rotateY(45deg) rotateX(180deg);
+    }
+    #ripple{
+        transform: scale(2) rotateY(10deg) rotateX(20deg);
+    }
+    #eos{
+        transform: scale(2) rotateY(50deg) rotateX(190deg);
+    }
+
+
+    /* utility classes */
+    .table tr td{
+        border: none;
+    }
+    .red{
+        color: #ff2f2f;
+        font-weight: 700;
+    }
+    .green{
+        color: #1cbb1c;
+        font-weight: 700;
+    }
+    .labels,.graph{
+        position: relative;
+    }
+    .green-label{
+        background-color: #00b300;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.7rem;
+    }
+    .orange-label{
+        background-color: #ffa500;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.7rem;
+    }
+    .border-right{
+        transform: scale(0.6);
+        border-right: 1px solid black!important;
+    }
+    .box{
+        transform: scale(1.5);
+        background-color: #dbe2ff;
+    }
+    #top .table tbody tr{
+        border-bottom: 1px solid #ddd;
+    }
+    #top .table tbody tr:last-child{
+        border: none;
+    }
+    select{
+        background-color: inherit;
+        padding: 8px;
+        border-radius: 5px;
+        color: #444;
+        border: 1px solid #444;
+        outline-color: #00f;
+    }
+    .text-white{
+        background-color: rgb(43, 159, 226);
+        border-radius: 50%;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 3px;
+    }
+    a:hover{
+        text-decoration: none;
+    }
+    a:hover .text-white{
+        background-color: rgb(20, 92, 187);
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar{
+        width: 10px;
+        height: 4px;
+    }
+    ::-webkit-scrollbar-thumb{
+        background: linear-gradient(45deg,#999,#777);
+        border-radius: 10px;
+
+    }
+
+    /* media Queries */
+    @media(max-width:379px){
+        .d-lg-flex .h3{
+            font-size: 1.4rem;
+        }
+    }
+    @media(max-width:352px){
+        #plat{
+            margin-top: 10px;
+        }
+    }
+</style>
+
+</html>

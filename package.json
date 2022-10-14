@@ -1,0 +1,21 @@
+{
+  "name": "datascopum",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node crypto.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "coinbase-pro-node": "^6.0.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.1",
+    "node": "^18.10.0",
+    "node-fetch": "^3.2.10",
+    "ws": "^8.9.0"
+  }
+}
