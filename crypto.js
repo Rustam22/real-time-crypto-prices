@@ -4,11 +4,11 @@ const app = express()
 const http = require('http')
 const crypto = http.createServer(app)
 
-require('dotenv').config()  // environmental variables
-
 // We are using Coinbase node module for subscribing and receiving realtime updates
 const {CoinbasePro} = require('coinbase-pro-node')
 const {WebSocketChannelName, WebSocketEvent} = require('coinbase-pro-node')
+
+require('dotenv').config()  // environmental variables
 
 const port = process.env.PORT
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args))
